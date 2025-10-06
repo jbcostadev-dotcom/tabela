@@ -88,7 +88,7 @@ export default function PricingTable() {
       {/* Category Filter */}
       <div className="bg-zinc-900 border-b border-amber-400/20">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-wrap gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
             <button
               onClick={() => setActiveCategory('all')}
               className={`px-6 py-3 rounded-full font-semibold transition-all ${
@@ -97,11 +97,11 @@ export default function PricingTable() {
                   : 'bg-zinc-800 text-white hover:bg-zinc-700'
               }`}
             >
-              Todos os Produtos
+              Todos
             </button>
             <button
               onClick={() => setActiveCategory('injectable')}
-              className={`px-6 py-3 rounded-full font-semibold transition-all flex items-center gap-2 ${
+              className={`px-6 py-3 rounded-full font-semibold transition-all flex items-center justify-center gap-2 ${
                 activeCategory === 'injectable'
                   ? 'bg-amber-400 text-black'
                   : 'bg-zinc-800 text-white hover:bg-zinc-700'
@@ -112,7 +112,7 @@ export default function PricingTable() {
             </button>
             <button
               onClick={() => setActiveCategory('oral')}
-              className={`px-6 py-3 rounded-full font-semibold transition-all flex items-center gap-2 ${
+              className={`px-6 py-3 rounded-full font-semibold transition-all flex items-center justify-center gap-2 ${
                 activeCategory === 'oral'
                   ? 'bg-amber-400 text-black'
                   : 'bg-zinc-800 text-white hover:bg-zinc-700'
