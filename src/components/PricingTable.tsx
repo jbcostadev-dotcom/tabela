@@ -88,10 +88,10 @@ export default function PricingTable() {
       {/* Category Filter */}
       <div className="bg-zinc-900 border-b border-amber-400/20">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
+          <div className="grid grid-cols-3 gap-3 md:flex md:flex-row md:flex-wrap md:gap-4 md:justify-center">
             <button
               onClick={() => setActiveCategory('all')}
-              className={`px-6 py-3 rounded-full font-semibold transition-all ${
+              className={`px-3 md:px-6 py-3 rounded-full text-sm md:text-base font-semibold transition-all ${
                 activeCategory === 'all'
                   ? 'bg-amber-400 text-black'
                   : 'bg-zinc-800 text-white hover:bg-zinc-700'
@@ -101,24 +101,25 @@ export default function PricingTable() {
             </button>
             <button
               onClick={() => setActiveCategory('injectable')}
-              className={`px-6 py-3 rounded-full font-semibold transition-all flex items-center justify-center gap-2 ${
+              className={`px-3 md:px-6 py-3 rounded-full text-sm md:text-base font-semibold transition-all flex items-center justify-center gap-1 md:gap-2 ${
                 activeCategory === 'injectable'
                   ? 'bg-amber-400 text-black'
                   : 'bg-zinc-800 text-white hover:bg-zinc-700'
               }`}
             >
-              <Syringe size={18} />
-              Injetáveis
+              <Syringe className="w-4 h-4 md:w-[18px] md:h-[18px]" />
+              <span className="hidden xs:inline">Injetáveis</span>
+              <span className="xs:hidden">Injet.</span>
             </button>
             <button
               onClick={() => setActiveCategory('oral')}
-              className={`px-6 py-3 rounded-full font-semibold transition-all flex items-center justify-center gap-2 ${
+              className={`px-3 md:px-6 py-3 rounded-full text-sm md:text-base font-semibold transition-all flex items-center justify-center gap-1 md:gap-2 ${
                 activeCategory === 'oral'
                   ? 'bg-amber-400 text-black'
                   : 'bg-zinc-800 text-white hover:bg-zinc-700'
               }`}
             >
-              <Pill size={18} />
+              <Pill className="w-4 h-4 md:w-[18px] md:h-[18px]" />
               Orais
             </button>
           </div>
