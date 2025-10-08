@@ -1,0 +1,17 @@
+node_modules
+dist
+dist-ssr
+.git
+.gitignore
+.vscode
+*.log
+logs
+.env
+README.md
+supabase/
+**/*.local
+**/*.suo
+**/*.sln
+**/*.sw?
+**/*.ntvs*
+**/*.njsproj
