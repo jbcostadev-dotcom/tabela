@@ -9,12 +9,12 @@ import fs from 'fs';
 const { Pool } = pkg;
 
 const app = express();
-const port = 3001;
-const JWT_SECRET = 'lockpharma_secret_key_2024';
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
+const JWT_SECRET = process.env.JWT_SECRET || 'lockpharma_secret_key_2024';
 
 // Configuração do banco
 const pool = new Pool({
-  connectionString: 'postgres://lockpharma:Zreel123!@easypanel.lockpainel.shop:1112/tabela?sslmode=disable',
+  connectionString: process.env.DATABASE_URL || 'postgres://lockpharma:Zreel123!@easypanel.lockpainel.shop:1112/tabela?sslmode=disable',
   ssl: false
 });
 
@@ -59,6 +59,10 @@ const upload = multer({
 // Servir arquivos estáticos da pasta public
 app.use('/logos', express.static(path.join(process.cwd(), 'public', 'logos')));
 app.use('/produtos', express.static(path.join(process.cwd(), 'public', 'produtos')));
+// Healthcheck simples
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
 // Middleware de autenticação
 const authenticateToken = (req, res, next) => {
