@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, LogOut, Package, Tag, Save, X, Building2, Upload, Image, Truck, ShoppingCart } from 'lucide-react';
+import { Plus, Edit, Trash2, LogOut, Package, Tag, Save, X, Building2, Truck, ShoppingCart } from 'lucide-react';
 
 interface Categoria {
   id: number;
@@ -118,7 +118,8 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
   }, [activeTab]);
 
   const apiRequest = async (url: string, options: any = {}) => {
-    const response = await fetch(`http://localhost:3001${url}`, {
+    const base = import.meta.env.VITE_API_BASE_URL ?? '/api';
+    const response = await fetch(`${base}${url}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
@@ -154,7 +155,7 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
 
   const loadMarcas = async () => {
     try {
-      const data = await fetch('http://localhost:3001/api/marcas').then(r => r.json());
+      const data = await fetch('/api/marcas').then(r => r.json());
       setMarcas(data);
     } catch (error) {
       console.error('Erro ao carregar marcas:', error);
@@ -164,7 +165,7 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
   const loadFretes = async () => {
     try {
       console.log('Carregando fretes...');
-      const response = await fetch('http://localhost:3001/api/frete');
+      const response = await fetch('/api/frete');
       const data = await response.json();
       console.log('Fretes carregados:', data);
       setFretes(data);
@@ -178,7 +179,7 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
     try {
       console.log('[AdminPanel] Carregando pedidos...');
       setPedidosError(null);
-      const response = await fetch('http://localhost:3001/api/pedidos');
+      const response = await fetch('/api/pedidos');
       if (!response.ok) {
         throw new Error(`Falha ao carregar pedidos: ${response.status}`);
       }
@@ -841,7 +842,7 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
                     type="number"
                     step="0.01"
                     value={valoresEstados[estado.sigla]}
-                    onChange={(e) => setValoresEstados(prev => ({
+                    onChange={(e) => setValoresEstados((prev: Record<string, string>) => ({
                       ...prev,
                       [estado.sigla]: e.target.value
                     }))}
@@ -907,7 +908,7 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
         formData.append('imagem', imagemFile);
         
         try {
-          const response = await fetch('http://localhost:3001/api/admin/upload-produto', {
+      const response = await fetch('/api/admin/upload-produto', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -1088,7 +1089,8 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
           }
         } catch (error) {
           console.error('Erro ao fazer upload:', error);
-          alert(`Erro ao fazer upload: ${error.message}`);
+          const message = error instanceof Error ? error.message : 'Erro desconhecido';
+          alert(`Erro ao fazer upload: ${message}`);
           return;
         }
       }
@@ -1568,7 +1570,7 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
                               {frete.seguro}%
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              R$ {parseFloat(frete.sp || '0').toFixed(2)}
+                              R$ {Number((frete as any).sp ?? 0).toFixed(2)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                               <div className="flex gap-2">
@@ -1705,7 +1707,7 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
                               {pedido.metodo_pagamento}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              R$ {parseFloat(pedido.total_pedido || '0').toFixed(2)}
+                              R$ {Number(pedido.total_pedido ?? 0).toFixed(2)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <select

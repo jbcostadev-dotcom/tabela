@@ -797,6 +797,14 @@ app.patch('/api/admin/pedidos/:id/status', authenticateToken, async (req, res) =
   }
 });
 
+// Servir frontend (build do Vite) e fallback SPA
+app.use(express.static(path.join(process.cwd(), 'dist')));
+app.get('*', (req, res) => {
+  // Não interceptar chamadas da API
+  if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Endpoint não encontrado' });
+  res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+});
+
 app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);
 });

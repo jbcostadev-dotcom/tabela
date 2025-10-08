@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { ArrowLeft, CreditCard, MapPin, User, Phone, Mail, FileText, Truck } from 'lucide-react';
+import { ArrowLeft, CreditCard, MapPin, User, FileText, Truck } from 'lucide-react';
 
 interface CarrinhoItem {
   produto: {
     id: number;
     nome: string;
     preco: number;
+    imagem_url?: string;
   };
   quantidade: number;
 }
@@ -68,7 +69,7 @@ export default function Checkout({ carrinho, totalCarrinho, onVoltar, onFinaliza
   // Função para buscar fretes disponíveis baseado no estado
   const buscarFretesDisponiveis = async (uf: string) => {
     try {
-      const response = await fetch('http://localhost:3001/api/frete');
+    const response = await fetch('/api/frete');
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

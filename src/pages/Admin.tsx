@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import AdminLogin from '../components/AdminLogin';
 import AdminPanel from '../components/AdminPanel';
 
@@ -17,7 +17,7 @@ export default function Admin() {
 
     if (token && user) {
       try {
-        const response = await fetch('http://localhost:3001/api/admin/verify', {
+    const response = await fetch('/api/admin/verify', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -42,6 +42,7 @@ export default function Admin() {
   const handleLogin = (token: string, admin: any) => {
     setIsAuthenticated(true);
     setAdminUser(admin);
+    localStorage.setItem('admin_token', token);
   };
 
   const handleLogout = () => {

@@ -184,7 +184,7 @@ export default function PricingTable() {
 
   const finalizarPedido = async (dadosPedido: any) => {
     try {
-      const response = await fetch('http://localhost:3001/api/pedidos', {
+    const response = await fetch('/api/pedidos', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -327,7 +327,8 @@ export default function PricingTable() {
                     onError={(e) => {
                       // Se a logo falhar, mostrar o nome da marca
                       e.currentTarget.style.display = 'none';
-                      e.currentTarget.parentElement.innerHTML = marca.nome;
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) parent.innerHTML = marca.nome;
                     }}
                   />
                 ) : (

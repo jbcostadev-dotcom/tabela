@@ -1,4 +1,24 @@
-# Base: Node.js para produção
+# Estágio de build do frontend
+FROM node:20-slim AS builder
+
+# Instalar ferramentas de build necessárias
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Instalar dependências (inclui dev para build)
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Copiar código e construir frontend
+COPY . .
+RUN npm run build
+
+# Estágio de runtime (API)
 FROM node:20-slim AS runtime
 
 # Instalar ferramentas de build necessárias para alguns módulos nativos (ex.: sqlite3/bcrypt)
@@ -10,14 +30,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copiar manifestos e instalar dependências de produção
 COPY package.json package-lock.json ./
 ENV NODE_ENV=production
 ENV PORT=3001
 RUN npm ci --omit=dev
 
-# Copiar código da aplicação
 COPY . .
+
+# Copiar build do frontend do estágio builder
+COPY --from=builder /app/dist ./dist
 
 # Garantir pastas de upload estático
 RUN mkdir -p public/logos public/produtos
