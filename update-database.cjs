@@ -53,6 +53,19 @@ async function updateDatabase() {
     `);
     console.log('✅ Tabela "marcas" criada');
 
+    // 2.1 Adicionar coluna ordem para reordenação manual das marcas
+    console.log('\n2.1 Verificando coluna "ordem" em marcas...');
+    const ordemColumn = await client.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'marcas' AND column_name = 'ordem'
+    `);
+    if (ordemColumn.rows.length === 0) {
+      await client.query(`ALTER TABLE marcas ADD COLUMN ordem INTEGER`);
+      console.log('✅ Coluna ordem adicionada à tabela marcas');
+    } else {
+      console.log('ℹ️  Coluna ordem já existe na tabela marcas');
+    }
+
     // 3. Adicionar campo marca_id na tabela produtos
     console.log('\n3. Adicionando campo marca_id na tabela produtos...');
     

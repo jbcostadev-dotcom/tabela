@@ -19,6 +19,7 @@ export type Marca = {
   id: number;
   nome: string;
   logo_url?: string;
+  ordem?: number;
   created_at: string;
   updated_at: string;
 };

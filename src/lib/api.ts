@@ -1,6 +1,11 @@
 import { Categoria, Produto, Marca } from './database';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
+const API_BASE_URL = (() => {
+  const defaultBase = (typeof window !== 'undefined' && window.location && window.location.port !== '3001')
+    ? 'http://localhost:3001/api'
+    : '/api';
+  return import.meta.env.VITE_API_BASE_URL ?? defaultBase;
+})();
 
 export async function getCategorias(): Promise<Categoria[]> {
   try {

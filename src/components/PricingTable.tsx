@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Pill, Syringe, X, Plus, Minus } from 'lucide-react';
+import { ShoppingCart, Pill, Syringe, X, Plus, Minus, MessageCircle } from 'lucide-react';
 import { getCategorias, getProdutos, getMarcas, type Categoria, type Produto, type Marca } from '../lib/api';
 import Checkout from './Checkout';
 
@@ -29,6 +29,7 @@ export default function PricingTable() {
   const [carrinho, setCarrinho] = useState<CarrinhoItem[]>([]);
   const [carrinhoAberto, setCarrinhoAberto] = useState(false);
   const [checkoutAberto, setCheckoutAberto] = useState(false);
+  const [suporteAberto, setSuporteAberto] = useState(false);
 
   // Função para carregar carrinho do localStorage
   const carregarCarrinhoSalvo = () => {
@@ -216,10 +217,19 @@ export default function PricingTable() {
   const totalItens = carrinho.reduce((total, item) => total + item.quantidade, 0);
 
   const handleWhatsAppClick = () => {
+    setSuporteAberto(true);
+  };
+
+  const openWhatsApp = () => {
     const phoneNumber = '5511993929062';
-    const message = 'Olá! Gostaria de saber mais sobre os produtos da Lock Pharma.';
+    const message = 'Olá! Preciso de suporte da Lock Pharma.';
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
+  };
+
+  const openTelegram = () => {
+    const telegramUrl = 'https://t.me/lockpharma';
+    window.open(telegramUrl, '_blank');
   };
 
   if (loading) {
@@ -272,16 +282,16 @@ export default function PricingTable() {
       {/* Information Cards Section */}
       <div className="bg-zinc-900 border-b border-amber-400/20">
         <div className="container mx-auto px-4 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Card 1 */}
             <div className="bg-zinc-800 rounded-lg p-6 border border-amber-400/20 hover:border-amber-400/40 transition-all">
               <div className="text-center">
                 <div className="w-12 h-12 bg-amber-400 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Syringe className="w-6 h-6 text-black" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">Qualidade Garantida</h3>
+                <h3 className="text-xl font-bold text-white mb-3">Seguro Grátis</h3>
                 <p className="text-zinc-300 text-sm leading-relaxed">
-                  Todos os nossos produtos passam por rigoroso controle de qualidade e são certificados pelos órgãos competentes.
+                  Reenviamos gratuitamente seu pedido se não chegar em caso de apreensão/extravio.
                 </p>
               </div>
             </div>
@@ -292,9 +302,9 @@ export default function PricingTable() {
                 <div className="w-12 h-12 bg-amber-400 rounded-full flex items-center justify-center mx-auto mb-4">
                   <ShoppingCart className="w-6 h-6 text-black" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">Entrega Rápida</h3>
+                <h3 className="text-xl font-bold text-white mb-3">Suporte</h3>
                 <p className="text-zinc-300 text-sm leading-relaxed">
-                  Enviamos seus produtos com segurança e agilidade para todo o Brasil, com rastreamento completo.
+                  Tiramos todas suas dúvidas e ajudamos a montar seu ciclo, clique no botão de atendimento no canto direito da tela.
                 </p>
               </div>
             </div>
@@ -385,13 +395,17 @@ export default function PricingTable() {
                     : 'bg-zinc-800 text-white hover:bg-zinc-700'
                 }`}
               >
-                {categoria.imagem_url && (
+                {categoria.nome === 'Injetáveis' ? (
+                  <Syringe className="w-4 h-4 md:w-[18px] md:h-[18px]" />
+                ) : categoria.nome === 'Oral' ? (
+                  <Pill className="w-4 h-4 md:w-[18px] md:h-[18px]" />
+                ) : categoria.imagem_url ? (
                   <img 
                     src={categoria.imagem_url} 
                     alt={categoria.nome}
                     className="w-4 h-4 md:w-[18px] md:h-[18px]"
                   />
-                )}
+                ) : null}
                 <span className="hidden xs:inline">{categoria.nome}</span>
                 <span className="xs:hidden">{categoria.nome.substring(0, 5)}.</span>
               </button>
@@ -493,7 +507,7 @@ export default function PricingTable() {
       <footer className="border-t border-amber-400/20 bg-zinc-900 mt-20">
         <div className="container mx-auto px-4 py-8 text-center">
           <p className="text-zinc-400 text-sm">
-            LOCK PHARMA - Produtos farmacêuticos de alta qualidade
+            Lock Pharma® - High Quality Products
           </p>
         </div>
       </footer>
@@ -625,23 +639,64 @@ export default function PricingTable() {
         </>
       )}
 
-      {/* Botão flutuante do WhatsApp - escondido quando checkout aberto */}
+      {/* Botão flutuante de Suporte - escondido quando checkout aberto */}
       {!checkoutAberto && (
-        <button
-          onClick={handleWhatsAppClick}
-          className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-50"
-          aria-label="Contato via WhatsApp"
-        >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            xmlns="http://www.w3.org/2000/svg"
+        <>
+          <button
+            onClick={handleWhatsAppClick}
+            className="fixed bottom-6 right-6 bg-amber-400 hover:bg-amber-500 text-black p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-40"
+            aria-label="Suporte"
+            title="Suporte"
           >
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.051 3.488"/>
-          </svg>
-        </button>
+            <MessageCircle className="w-6 h-6" />
+          </button>
+
+          {suporteAberto && (
+            <div className="fixed inset-0 z-50">
+              {/* Overlay */}
+              <div
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                onClick={() => setSuporteAberto(false)}
+              />
+
+              {/* Card de Suporte */}
+              <div className="absolute bottom-6 right-6 w-[92%] max-w-sm bg-zinc-900 border border-amber-400/30 rounded-2xl shadow-2xl">
+                <div className="flex items-center justify-between p-4 border-b border-amber-400/20">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5 text-amber-400" />
+                    <span className="text-white font-semibold">Atendimento</span>
+                  </div>
+                  <button
+                    className="p-2 rounded hover:bg-zinc-800 text-zinc-400"
+                    onClick={() => setSuporteAberto(false)}
+                    aria-label="Fechar"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="p-4 space-y-3">
+                  <p className="text-zinc-300 text-sm">
+                    Escolha por onde deseja ser atendido:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                      onClick={openWhatsApp}
+                      className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-lg transition-all"
+                    >
+                      WhatsApp
+                    </button>
+                    <button
+                      onClick={openTelegram}
+                      className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition-all"
+                    >
+                      Telegram
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

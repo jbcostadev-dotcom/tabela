@@ -158,8 +158,15 @@ app.get('/api/categorias', async (req, res) => {
 // Buscar marcas
 app.get('/api/marcas', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM marcas ORDER BY nome');
-    res.json(result.rows);
+    // Tenta ordenar pela coluna 'ordem' se existir; faz fallback para nome
+    try {
+      const result = await pool.query('SELECT id, nome, logo_url, ordem, created_at, updated_at FROM marcas ORDER BY COALESCE(ordem, 9999), nome');
+      res.json(result.rows);
+    } catch (err) {
+      console.warn('Coluna ordem pode não existir, usando ORDER BY nome. Detalhes:', err.message);
+      const result = await pool.query('SELECT * FROM marcas ORDER BY nome');
+      res.json(result.rows);
+    }
   } catch (error) {
     console.error('Erro ao buscar marcas:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -506,6 +513,38 @@ app.delete('/api/admin/marcas/:id', authenticateToken, async (req, res) => {
     res.json({ message: 'Marca deletada com sucesso' });
   } catch (error) {
     console.error('Erro ao deletar marca:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Reordenar marcas (Admin)
+app.post('/api/admin/marcas/reorder', authenticateToken, async (req, res) => {
+  try {
+    const { order } = req.body; // array de IDs na nova ordem
+    if (!Array.isArray(order) || order.length === 0) {
+      return res.status(400).json({ error: 'Formato inválido: "order" deve ser um array de IDs' });
+    }
+
+    // Garantir que a coluna existe
+    await pool.query('ALTER TABLE marcas ADD COLUMN IF NOT EXISTS ordem INTEGER');
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (let i = 0; i < order.length; i++) {
+        await client.query('UPDATE marcas SET ordem = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [i + 1, order[i]]);
+      }
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erro ao reordenar marcas:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });

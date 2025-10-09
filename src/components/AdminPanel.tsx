@@ -11,6 +11,7 @@ interface Marca {
   id: number;
   nome: string;
   logo_url?: string;
+  ordem?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -99,6 +100,8 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
   const [showForm, setShowForm] = useState(false);
   const [showFreteForm, setShowFreteForm] = useState(false);
   const [showPedidoForm, setShowPedidoForm] = useState(false);
+  const [draggedMarcaId, setDraggedMarcaId] = useState<number | null>(null);
+  const [marcasDirty, setMarcasDirty] = useState(false);
 
   const token = localStorage.getItem('admin_token');
 
@@ -118,7 +121,12 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
   }, [activeTab]);
 
   const apiRequest = async (url: string, options: any = {}) => {
-    const base = import.meta.env.VITE_API_BASE_URL ?? '/api';
+    // Base dinâmica: se VITE_API_BASE_URL não estiver setado, usa proxy no dev ("/api")
+    // ou aponta diretamente para o backend em 3001 quando não estiver rodando no mesmo host.
+    const defaultBase = (typeof window !== 'undefined' && window.location && window.location.port !== '3001')
+      ? 'http://localhost:3001/api'
+      : '/api';
+    const base = import.meta.env.VITE_API_BASE_URL ?? defaultBase;
     const cleanBase = String(base).replace(/\/+$/, '');
     const path = url.startsWith('/') ? url : `/${url}`;
     const fullUrl = cleanBase.endsWith('/api') && path.startsWith('/api')
@@ -161,8 +169,9 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
 
   const loadMarcas = async () => {
     try {
-      const data = await fetch('/api/marcas').then(r => r.json());
+      const data = await apiRequest('/api/marcas', { method: 'GET' });
       setMarcas(data);
+      setMarcasDirty(false);
     } catch (error) {
       console.error('Erro ao carregar marcas:', error);
     }
@@ -171,8 +180,7 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
   const loadFretes = async () => {
     try {
       console.log('Carregando fretes...');
-      const response = await fetch('/api/frete');
-      const data = await response.json();
+      const data = await apiRequest('/api/frete', { method: 'GET' });
       console.log('Fretes carregados:', data);
       setFretes(data);
     } catch (error) {
@@ -185,11 +193,7 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
     try {
       console.log('[AdminPanel] Carregando pedidos...');
       setPedidosError(null);
-      const response = await fetch('/api/pedidos');
-      if (!response.ok) {
-        throw new Error(`Falha ao carregar pedidos: ${response.status}`);
-      }
-      const data = await response.json();
+      const data = await apiRequest('/api/pedidos', { method: 'GET' });
       console.log('[AdminPanel] Pedidos recebidos:', Array.isArray(data) ? data.length : typeof data);
       const mapped = (Array.isArray(data) ? data : []).map((p: any) => ({
         ...p,
@@ -1448,6 +1452,29 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
                 )}
 
                 <div className="overflow-x-auto">
+                  <div className="flex justify-end mb-2">
+                    <button
+                      disabled={!marcasDirty || loading}
+                      onClick={async () => {
+                        try {
+                          setLoading(true);
+                          const order = marcas.map(m => m.id);
+                          await apiRequest('/api/admin/marcas/reorder', {
+                            method: 'POST',
+                            body: JSON.stringify({ order }),
+                          });
+                          await loadMarcas();
+                        } catch (error) {
+                          console.error('Erro ao salvar ordem de marcas:', error);
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      className={`px-3 py-2 rounded-md text-white ${marcasDirty ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'}`}
+                    >
+                      Salvar ordem
+                    </button>
+                  </div>
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
@@ -1466,8 +1493,24 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {marcas.map((marca) => (
-                        <tr key={marca.id}>
+                      {marcas.map((marca, index) => (
+                        <tr
+                          key={marca.id}
+                          draggable
+                          onDragStart={() => setDraggedMarcaId(marca.id)}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={() => {
+                            if (draggedMarcaId === null || draggedMarcaId === marca.id) return;
+                            const draggedIndex = marcas.findIndex(m => m.id === draggedMarcaId);
+                            if (draggedIndex === -1) return;
+                            const updated = [...marcas];
+                            const [moved] = updated.splice(draggedIndex, 1);
+                            updated.splice(index, 0, moved);
+                            setMarcas(updated);
+                            setMarcasDirty(true);
+                          }}
+                          className="hover:bg-gray-50 cursor-move"
+                        >
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {marca.id}
                           </td>
