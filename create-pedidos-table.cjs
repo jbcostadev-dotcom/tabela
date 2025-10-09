@@ -29,6 +29,7 @@ async function createPedidosTable() {
         metodo_pagamento VARCHAR(50) NOT NULL,
         frete DECIMAL(10,2) NOT NULL DEFAULT 0,
         total_pedido DECIMAL(10,2) NOT NULL,
+        itens TEXT,
         status VARCHAR(50) DEFAULT 'Pendente',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

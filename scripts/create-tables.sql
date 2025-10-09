@@ -114,6 +114,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
     metodo_pagamento VARCHAR(50) NOT NULL, -- Método de pagamento (PIX, Cartão, etc.)
     frete DECIMAL(10,2) NOT NULL DEFAULT 0, -- Valor do frete
     total_pedido DECIMAL(10,2) NOT NULL, -- Valor total do pedido
+    itens TEXT, -- Lista de itens e quantidades
     status VARCHAR(50) DEFAULT 'Pendente', -- Status do pedido
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

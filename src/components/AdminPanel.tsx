@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, LogOut, Package, Tag, Save, X, Building2, Truck, ShoppingCart } from 'lucide-react';
 
 interface Categoria {
@@ -119,7 +119,13 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
 
   const apiRequest = async (url: string, options: any = {}) => {
     const base = import.meta.env.VITE_API_BASE_URL ?? '/api';
-    const response = await fetch(`${base}${url}`, {
+    const cleanBase = String(base).replace(/\/+$/, '');
+    const path = url.startsWith('/') ? url : `/${url}`;
+    const fullUrl = cleanBase.endsWith('/api') && path.startsWith('/api')
+      ? `${cleanBase}${path.slice(4)}`
+      : `${cleanBase}${path}`;
+
+    const response = await fetch(fullUrl, {
       ...options,
       headers: {
         'Content-Type': 'application/json',

@@ -79,6 +79,19 @@ async function updateDatabase() {
     const marcasExistentes = await client.query('SELECT COUNT(*) as count FROM marcas');
     console.log(`ℹ️  Encontradas ${marcasExistentes.rows[0].count} marcas no banco de dados`);
 
+    // 5. Adicionar coluna itens na tabela pedidos
+    console.log('\n5. Verificando coluna "itens" na tabela pedidos...');
+    const itensColumn = await client.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'pedidos' AND column_name = 'itens'
+    `);
+    if (itensColumn.rows.length === 0) {
+      await client.query(`ALTER TABLE pedidos ADD COLUMN itens TEXT`);
+      console.log('✅ Coluna itens adicionada à tabela pedidos');
+    } else {
+      console.log('ℹ️  Coluna itens já existe na tabela pedidos');
+    }
+
     // 5. Atualizar alguns produtos com marcas (exemplo)
     console.log('\n5. Vinculando produtos às marcas...');
     

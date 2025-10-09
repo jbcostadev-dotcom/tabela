@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Lock, User, Eye, EyeOff } from 'lucide-react';
 
 interface AdminLoginProps {

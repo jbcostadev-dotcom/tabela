@@ -21,6 +21,11 @@ const pool = new Pool({
 app.use(cors());
 app.use(express.json());
 
+// Endpoint de saúde para verificação de disponibilidade
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
 // Configuração do multer para upload de imagens
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -675,18 +680,18 @@ app.post('/api/pedidos', async (req, res) => {
   try {
     const {
       nome, cpf, email, telefone, cep, rua, numero, complemento,
-      bairro, cidade, estado, metodo_pagamento, frete, total_pedido, seguro
+      bairro, cidade, estado, metodo_pagamento, frete, total_pedido, seguro, itens
     } = req.body;
 
     const result = await pool.query(`
       INSERT INTO pedidos (
         nome, cpf, email, telefone, cep, rua, numero, complemento,
-        bairro, cidade, estado, metodo_pagamento, frete, total_pedido, seguro
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        bairro, cidade, estado, metodo_pagamento, frete, total_pedido, seguro, itens
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       RETURNING *
     `, [
       nome, cpf, email, telefone, cep, rua, numero, complemento,
-      bairro, cidade, estado, metodo_pagamento, frete, total_pedido, seguro || 'não'
+      bairro, cidade, estado, metodo_pagamento, frete, total_pedido, seguro || 'não', itens || null
     ]);
 
     res.status(201).json(result.rows[0]);
@@ -701,18 +706,18 @@ app.post('/api/admin/pedidos', authenticateToken, async (req, res) => {
   try {
     const {
       nome, cpf, email, telefone, cep, rua, numero, complemento,
-      bairro, cidade, estado, metodo_pagamento, frete, total_pedido, status, seguro
+      bairro, cidade, estado, metodo_pagamento, frete, total_pedido, status, seguro, itens
     } = req.body;
 
     const result = await pool.query(`
       INSERT INTO pedidos (
         nome, cpf, email, telefone, cep, rua, numero, complemento,
-        bairro, cidade, estado, metodo_pagamento, frete, total_pedido, status, seguro
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        bairro, cidade, estado, metodo_pagamento, frete, total_pedido, status, seguro, itens
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *
     `, [
       nome, cpf, email, telefone, cep, rua, numero, complemento,
-      bairro, cidade, estado, metodo_pagamento, frete, total_pedido, status || 'Pendente', seguro || 'não'
+      bairro, cidade, estado, metodo_pagamento, frete, total_pedido, status || 'Pendente', seguro || 'não', itens || null
     ]);
 
     res.status(201).json(result.rows[0]);

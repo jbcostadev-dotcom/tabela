@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, CreditCard, MapPin, User, FileText, Truck } from 'lucide-react';
 
 interface CarrinhoItem {
@@ -158,6 +158,11 @@ export default function Checkout({ carrinho, totalCarrinho, onVoltar, onFinaliza
     setLoading(true);
 
     try {
+      // Montar string de itens: "Nome (quantidade)" separados por vírgula
+      const itensString = carrinho
+        .map(item => `${item.produto.nome} (${item.quantidade})`)
+        .join(', ');
+
       const dadosPedido = {
         nome,
         cpf: cpf.replace(/\D/g, ''),
@@ -174,7 +179,8 @@ export default function Checkout({ carrinho, totalCarrinho, onVoltar, onFinaliza
         frete,
         total_pedido: totalCarrinho + frete + valorSeguro,
         seguro: seguroAtivo ? 'sim' : 'não',
-        status: 'pendente'
+        status: 'pendente',
+        itens: itensString
       };
 
       await onFinalizarPedido(dadosPedido);
@@ -187,7 +193,7 @@ export default function Checkout({ carrinho, totalCarrinho, onVoltar, onFinaliza
   };
 
   // Recalcular seguro sempre que necessário
-  React.useEffect(() => {
+  useEffect(() => {
     calcularSeguro();
   }, [seguroAtivo, freteEscolhido, totalCarrinho]);
 
