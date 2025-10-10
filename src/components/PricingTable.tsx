@@ -289,9 +289,9 @@ export default function PricingTable() {
                 <div className="w-12 h-12 bg-amber-400 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Syringe className="w-6 h-6 text-black" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">Seguro Grátis</h3>
+                <h3 className="text-xl font-bold text-white mb-3">Envio Seguro</h3>
                 <p className="text-zinc-300 text-sm leading-relaxed">
-                  Reenviamos gratuitamente seu pedido se não chegar em caso de apreensão/extravio.
+                  Nosso envio é totalmente discreto, com a opção de seguro onde reenviamos seu pedido em caso de apreensão/extravio.
                 </p>
               </div>
             </div>
