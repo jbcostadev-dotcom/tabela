@@ -21,3 +21,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Uploaded dynamic assets (generated at runtime)
+public/logos/logo-*
+public/produtos/produto-*

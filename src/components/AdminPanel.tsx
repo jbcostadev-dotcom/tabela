@@ -133,13 +133,18 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
       ? `${cleanBase}${path.slice(4)}`
       : `${cleanBase}${path}`;
 
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${token}`,
+      ...(options.headers || {}),
+    };
+
+    if (!(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     const response = await fetch(fullUrl, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        ...options.headers,
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -151,7 +156,7 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
 
   const loadCategorias = async () => {
     try {
-      const data = await fetch('http://localhost:3001/api/categorias').then(r => r.json());
+      const data = await apiRequest('/api/categorias', { method: 'GET' });
       setCategorias(data);
     } catch (error) {
       console.error('Erro ao carregar categorias:', error);
@@ -160,7 +165,7 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
 
   const loadProdutos = async () => {
     try {
-      const data = await fetch('http://localhost:3001/api/produtos').then(r => r.json());
+      const data = await apiRequest('/api/produtos', { method: 'GET' });
       setProdutos(data);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
@@ -918,18 +923,14 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
         formData.append('imagem', imagemFile);
         
         try {
-      const response = await fetch('/api/admin/upload-produto', {
+          const result = await apiRequest('/api/admin/upload-produto', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
             },
             body: formData,
           });
-          
-          if (response.ok) {
-            const result = await response.json();
-            imagem_url = result.imagem_url;
-          }
+          imagem_url = result.imagem_url;
         } catch (error) {
           console.error('Erro ao fazer upload da imagem:', error);
         }
@@ -1082,21 +1083,14 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
         
         try {
           const token = localStorage.getItem('admin_token');
-          const response = await fetch('/api/admin/upload-logo', {
+          const result = await apiRequest('/api/admin/upload-logo', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
             },
             body: formData,
           });
-          
-          if (response.ok) {
-            const result = await response.json();
-            logoUrl = result.logo_url;
-          } else {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Erro no upload da imagem');
-          }
+          logoUrl = result.logo_url;
         } catch (error) {
           console.error('Erro ao fazer upload:', error);
           const message = error instanceof Error ? error.message : 'Erro desconhecido';

@@ -18,7 +18,11 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
     setError('');
 
     try {
-      const response = await fetch('/api/admin/login', {
+      const defaultBase = (typeof window !== 'undefined' && window.location && window.location.port !== '3001')
+        ? 'http://localhost:3001/api'
+        : '/api';
+      const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? defaultBase;
+      const response = await fetch(`${API_BASE_URL}/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
