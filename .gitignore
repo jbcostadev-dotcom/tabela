@@ -21,6 +21,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+login.json
 
 # Uploaded dynamic assets (generated at runtime)
 public/logos/logo-*
