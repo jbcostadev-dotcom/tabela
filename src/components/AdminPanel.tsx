@@ -79,6 +79,7 @@ interface Produto {
   categoria_id: number;
   categoria_nome?: string;
   marca_id?: number;
+  marca?: Marca;
   imagem_url?: string;
 }
 
@@ -1371,6 +1372,9 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
                           Categoria
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Marca
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Ações
                         </th>
                       </tr>
@@ -1389,6 +1393,9 @@ export default function AdminPanel({ onLogout, adminUser }: AdminPanelProps) {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {produto.categoria_nome || `ID: ${produto.categoria_id}`}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {produto.marca?.nome || (produto.marca_id ? `ID: ${produto.marca_id}` : '-')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex gap-2">

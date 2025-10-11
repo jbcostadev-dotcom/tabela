@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 const { Pool } = pkg;
 
 const app = express();
@@ -101,17 +102,27 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Configuração do multer para upload de imagens
+// Base robusta de diretórios (funciona em Docker/Easypanel)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT_DIR = path.resolve(__dirname, '..');
+const PUBLIC_DIR = process.env.PUBLIC_DIR ? path.resolve(process.env.PUBLIC_DIR) : path.join(ROOT_DIR, 'public');
+const LOGOS_DIR = path.join(PUBLIC_DIR, 'logos');
+const PRODUTOS_DIR = path.join(PUBLIC_DIR, 'produtos');
+
+// Garantir diretórios de uploads
+try {
+  fs.mkdirSync(LOGOS_DIR, { recursive: true });
+  fs.mkdirSync(PRODUTOS_DIR, { recursive: true });
+  console.log('Diretórios de upload prontos:', { LOGOS_DIR, PRODUTOS_DIR });
+} catch (e) {
+  console.error('Falha ao garantir diretórios de upload:', e);
+}
+
+// Configuração do multer para upload de imagens (logos)
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadPath = path.join(process.cwd(), 'public', 'logos');
-    
-    // Criar diretório se não existir
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    
-    cb(null, uploadPath);
+    cb(null, LOGOS_DIR);
   },
   filename: function (req, file, cb) {
     // Gerar nome único para o arquivo
@@ -136,9 +147,9 @@ const upload = multer({
   }
 });
 
-// Servir arquivos estáticos da pasta public
-app.use('/logos', express.static(path.join(process.cwd(), 'public', 'logos')));
-app.use('/produtos', express.static(path.join(process.cwd(), 'public', 'produtos')));
+// Servir arquivos estáticos
+app.use('/logos', express.static(LOGOS_DIR));
+app.use('/produtos', express.static(PRODUTOS_DIR));
 // Healthcheck simples
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -478,14 +489,7 @@ app.post('/api/admin/upload-produto', authenticateToken, (req, res) => {
   // Configuração específica para produtos
   const produtoStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-      const uploadPath = path.join(process.cwd(), 'public', 'produtos');
-      
-      // Criar diretório se não existir
-      if (!fs.existsSync(uploadPath)) {
-        fs.mkdirSync(uploadPath, { recursive: true });
-      }
-      
-      cb(null, uploadPath);
+      cb(null, PRODUTOS_DIR);
     },
     filename: function (req, file, cb) {
       // Gerar nome único para o arquivo
