@@ -18,6 +18,81 @@ const pool = new Pool({
   ssl: false
 });
 
+// Garantir que a tabela admin exista
+async function ensureAdminTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS admin (
+        id SERIAL PRIMARY KEY,
+        usuario VARCHAR(100) NOT NULL UNIQUE,
+        username VARCHAR(50),
+        password VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('Tabela admin garantida');
+  } catch (e) {
+    console.warn('Falha ao garantir tabela admin:', e.message);
+  }
+}
+
+await ensureAdminTable();
+
+// Semeia um admin padrão se não existir
+async function ensureAdminSeed() {
+  try {
+    const existing = await pool.query('SELECT * FROM admin WHERE usuario = $1', ['lockpharma']);
+    if (existing.rowCount === 0) {
+      const hashed = await bcrypt.hash('Zreel123!', 10);
+      await pool.query(
+        'INSERT INTO admin (usuario, username, password) VALUES ($1, $2, $3)',
+        ['lockpharma', 'lockpharma', hashed]
+      );
+      console.log('Admin padrão semeado: usuario=lockpharma');
+    } else {
+      console.log('Admin padrão já existe no banco');
+    }
+  } catch (e) {
+    console.warn('Não foi possível semear admin padrão:', e.message);
+  }
+}
+
+// Executa semeadura sem bloquear inicialização
+ensureAdminSeed();
+
+// Garantir schema consistente da tabela admin (migrar coluna senha -> password)
+async function ensureAdminSchema() {
+  try {
+    // Verificar colunas existentes
+    const cols = await pool.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'admin'
+    `);
+    const colNames = cols.rows.map(r => r.column_name);
+    const hasPassword = colNames.includes('password');
+    const hasSenha = colNames.includes('senha');
+
+    if (!hasPassword) {
+      await pool.query(`ALTER TABLE admin ADD COLUMN password VARCHAR(255)`);
+      console.log('Coluna password adicionada à tabela admin');
+    }
+
+    if (hasSenha) {
+      // Migrar valores de senha -> password se password estiver vazio
+      await pool.query(`
+        UPDATE admin SET password = senha 
+        WHERE (password IS NULL OR password = '') AND senha IS NOT NULL AND senha <> ''
+      `);
+      console.log('Valores migrados de coluna senha para password');
+    }
+  } catch (e) {
+    console.warn('Falha ao garantir schema admin:', e.message);
+  }
+}
+
+ensureAdminSchema();
+
 app.use(cors());
 app.use(express.json());
 
@@ -108,10 +183,10 @@ app.post('/api/admin/login', async (req, res) => {
     console.log('Dados do admin encontrado:', { 
       id: admin.id, 
       usuario: admin.usuario,
-      senhaHash: admin.senha ? 'existe' : 'não existe'
+      passwordHash: admin.password ? 'existe' : 'não existe'
     });
     
-    const validPassword = await bcrypt.compare(senha, admin.senha);
+    const validPassword = await bcrypt.compare(senha, admin.password);
     console.log('Verificação de senha:', { valida: validPassword });
     
     if (!validPassword) {
