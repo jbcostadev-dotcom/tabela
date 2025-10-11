@@ -1,9 +1,9 @@
 import { Categoria, Produto, Marca } from './database';
 
 const API_BASE_URL = (() => {
-  const defaultBase = (typeof window !== 'undefined' && window.location && window.location.port !== '3001')
-    ? 'http://localhost:3001/api'
-    : '/api';
+  // Em produção, use sempre o mesmo domínio com caminho /api.
+  // Em desenvolvimento, o Vite proxy já redireciona /api para localhost:3001.
+  const defaultBase = '/api';
   return import.meta.env.VITE_API_BASE_URL ?? defaultBase;
 })();
 
