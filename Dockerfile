@@ -10,6 +10,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
+# Permitir configurar base da API no build do frontend
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
 # Instalar dependências (inclui dev para build)
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -33,6 +37,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 ENV NODE_ENV=production
 ENV PORT=3001
+ENV PUBLIC_DIR=/app/public
 RUN npm ci --omit=dev
 
 COPY . .
