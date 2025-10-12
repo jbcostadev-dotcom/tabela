@@ -14,9 +14,17 @@ const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'lockpharma_secret_key_2024';
 
 // Configuração do banco
+const CONNECTION_STRING = process.env.DATABASE_URL || 'postgres://lockpharma:Zreel123!@easypanel.lockpainel.shop:1112/tabela?sslmode=disable';
+const USE_SSL = process.env.DATABASE_SSL === 'true';
+try {
+  const u = new URL(CONNECTION_STRING);
+  console.log('DB alvo:', `${u.hostname}:${u.port}${u.pathname}`, 'SSL:', USE_SSL);
+} catch (e) {
+  console.log('Usando conexão de banco configurada. SSL:', USE_SSL);
+}
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://lockpharma:Zreel123!@easypanel.lockpainel.shop:1112/tabela?sslmode=disable',
-  ssl: false
+  connectionString: CONNECTION_STRING,
+  ssl: USE_SSL ? { rejectUnauthorized: false } : false
 });
 
 // Garantir que a tabela admin exista
@@ -59,8 +67,8 @@ async function ensureAdminSeed() {
   }
 }
 
-// Executa semeadura sem bloquear inicialização
-ensureAdminSeed();
+// Executa semeadura garantindo conclusão antes de iniciar as rotas
+await ensureAdminSeed();
 
 // Garantir schema consistente da tabela admin (migrar coluna senha -> password)
 async function ensureAdminSchema() {
@@ -92,7 +100,54 @@ async function ensureAdminSchema() {
   }
 }
 
-ensureAdminSchema();
+await ensureAdminSchema();
+
+// Garantir schema essencial (categorias, marcas, produtos) para evitar 42P01
+async function ensureCoreSchema() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS categorias (
+        id SERIAL PRIMARY KEY,
+        nome VARCHAR(100) NOT NULL,
+        imagem_url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS marcas (
+        id SERIAL PRIMARY KEY,
+        nome VARCHAR(100) NOT NULL,
+        logo_url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS produtos (
+        id SERIAL PRIMARY KEY,
+        nome VARCHAR(200) NOT NULL,
+        preco DECIMAL(10,2) NOT NULL,
+        id_categoria INTEGER NOT NULL,
+        descricao TEXT,
+        imagem_url TEXT,
+        estoque INTEGER DEFAULT 0,
+        marca_id INTEGER REFERENCES marcas(id) ON DELETE SET NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (id_categoria) REFERENCES categorias(id)
+      )
+    `);
+
+    console.log('Schema essencial garantido (categorias, marcas, produtos)');
+  } catch (e) {
+    console.warn('Falha ao garantir schema essencial:', e.message);
+  }
+}
+
+await ensureCoreSchema();
 
 app.use(cors());
 app.use(express.json());
@@ -100,6 +155,26 @@ app.use(express.json());
 // Endpoint de saúde para verificação de disponibilidade
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+// Endpoint para validar conexão e inspeção básica do DB
+app.get('/api/db-ping', async (req, res) => {
+  try {
+    const info = await pool.query('SELECT current_database() as db');
+    const tables = await pool.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' AND table_name IN ('categorias','marcas','produtos')
+    `);
+    const counts = {};
+    for (const t of tables.rows) {
+      const r = await pool.query(`SELECT COUNT(*) AS count FROM ${t.table_name}`);
+      counts[t.table_name] = parseInt(r.rows[0].count, 10);
+    }
+    res.json({ ok: true, db: info.rows[0].db, tables: tables.rows.map(r => r.table_name), counts });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
 });
 
 // Base robusta de diretórios (funciona em Docker/Easypanel)
