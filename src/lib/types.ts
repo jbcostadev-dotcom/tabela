@@ -1,12 +1,3 @@
-import { Pool } from 'pg';
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://lockpharma:Zreel123!@easypanel.lockpainel.shop:1112/tabela?sslmode=disable',
-  ssl: false
-});
-
-export { pool };
-
 export type Categoria = {
   id: number;
   nome: string;
@@ -35,6 +26,6 @@ export type Produto = {
   estoque: number;
   created_at: string;
   updated_at: string;
-  categoria?: Categoria;
-  marca?: Marca;
+  categoria?: Categoria | null;
+  marca?: Marca | null;
 };

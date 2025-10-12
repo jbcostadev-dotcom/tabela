@@ -1,4 +1,4 @@
-import { Categoria, Produto, Marca } from './database';
+import { Categoria, Produto, Marca } from './types';
 
 const API_BASE_URL = (() => {
   // Em produção, use sempre o mesmo domínio com caminho /api.
