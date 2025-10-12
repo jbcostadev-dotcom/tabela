@@ -12,6 +12,9 @@ export default {
       height: {
         '19': '75px',
         '15': '60px',
+      },
+      fontSize: {
+        sm: ['0.775rem', { lineHeight: '1.25rem' }],
       }
     },
   },
