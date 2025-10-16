@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Pill, Syringe, X, Plus, Minus, MessageCircle } from 'lucide-react';
+import { ShoppingCart, Pill, Syringe, X, Plus, Minus, MessageCircle, Search } from 'lucide-react';
 import { getCategorias, getProdutos, getMarcas, type Categoria, type Produto, type Marca } from '../lib/api';
 import Checkout from './Checkout';
+import ProductModal from './ProductModal';
 
 // Tipo para item do carrinho
 interface CarrinhoItem {
@@ -24,12 +25,34 @@ export default function PricingTable() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [activeBrand, setActiveBrand] = useState<number | null>(null);
+  // Busca
+  const [searchInput, setSearchInput] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const headerRef = useRef<HTMLElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  useEffect(() => {
+    if (showSearchBar) {
+      searchInputRef.current?.focus();
+    }
+  }, [showSearchBar]);
+
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      setHeaderHeight(headerRef.current?.offsetHeight || 0);
+    };
+    updateHeaderHeight();
+    window.addEventListener('resize', updateHeaderHeight);
+    return () => window.removeEventListener('resize', updateHeaderHeight);
+  }, []);
   
   // Estados do carrinho
   const [carrinho, setCarrinho] = useState<CarrinhoItem[]>([]);
   const [carrinhoAberto, setCarrinhoAberto] = useState(false);
   const [checkoutAberto, setCheckoutAberto] = useState(false);
   const [suporteAberto, setSuporteAberto] = useState(false);
+  const [modalProduto, setModalProduto] = useState<Produto | null>(null);
 
   // Função para carregar carrinho do localStorage
   const carregarCarrinhoSalvo = () => {
@@ -105,7 +128,15 @@ export default function PricingTable() {
   const filteredProducts = produtos.filter(produto => {
     const categoryMatch = activeCategory === null ? true : produto.id_categoria === activeCategory;
     const brandMatch = activeBrand === null ? true : produto.marca_id === activeBrand;
-    return categoryMatch && brandMatch;
+    const q = searchTerm.trim().toLowerCase();
+    const searchMatch = q === ''
+      ? true
+      : (
+          (produto.nome?.toLowerCase().includes(q)) ||
+          (produto.marca?.nome?.toLowerCase().includes(q)) ||
+          (produto.categoria?.nome?.toLowerCase().includes(q))
+        );
+    return categoryMatch && brandMatch && searchMatch;
   });
 
   // Agrupar produtos por marca
@@ -147,6 +178,21 @@ export default function PricingTable() {
         );
       }
       return [...prev, { produto, quantidade: 1 }];
+    });
+    setCarrinhoAberto(true);
+  };
+
+  const adicionarAoCarrinhoComQuantidade = (produto: Produto, quantidade: number) => {
+    setCarrinho(prev => {
+      const itemExistente = prev.find(item => item.produto.id === produto.id);
+      if (itemExistente) {
+        return prev.map(item =>
+          item.produto.id === produto.id
+            ? { ...item, quantidade: item.quantidade + quantidade }
+            : item
+        );
+      }
+      return [...prev, { produto, quantidade }];
     });
     setCarrinhoAberto(true);
   };
@@ -232,6 +278,11 @@ export default function PricingTable() {
     window.open(telegramUrl, '_blank');
   };
 
+  const abrirModalProduto = (produto: Produto) => {
+    setModalProduto(produto);
+  };
+  const fecharModalProduto = () => setModalProduto(null);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -242,6 +293,13 @@ export default function PricingTable() {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      {modalProduto && (
+        <ProductModal
+          produto={modalProduto}
+          onClose={fecharModalProduto}
+          onAddToCart={adicionarAoCarrinhoComQuantidade}
+        />
+      )}
       {/* Componente Checkout */}
       {checkoutAberto ? (
         <Checkout
@@ -253,59 +311,109 @@ export default function PricingTable() {
       ) : (
         <>
           {/* Header */}
-          <header className="border-b border-amber-400/20 bg-black/90 backdrop-blur-sm sticky top-0 z-50">
+          <header ref={headerRef} className="border-b border-amber-400/20 bg-black/90 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <img 
                 src="/logos/lockpharma.png" 
                 alt="Lock Pharma Logo" 
-                className="h-20 md:h-24 w-auto"
+                className="h-16 md:h-20 w-auto"
               />
             </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => { setShowSearchBar((prev) => !prev); }}
+                className="bg-zinc-800 hover:bg-zinc-700 text-amber-400 p-2 rounded-full flex items-center justify-center"
+                title="Pesquisar"
+                aria-label="Pesquisar"
+              >
+                <Search className="w-5 h-5" />
+              </button>
             <button 
               onClick={() => setCarrinhoAberto(true)}
               className="bg-amber-400 hover:bg-amber-500 text-black px-6 py-3 rounded-full flex items-center gap-2 transition-all transform hover:scale-105 relative"
             >
               <ShoppingCart size={20} />
-              <span className="font-semibold">Carrinho</span>
               {totalItens > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold">
                   {totalItens}
                 </span>
               )}
             </button>
+            </div>
           </div>
         </div>
       </header>
+
+      {/* Search Bar Section (below header, toggled by icon) */}
+      {showSearchBar && (
+      <div className="fixed left-0 right-0 z-40 bg-zinc-950 border-b border-amber-400/20 shadow-sm" style={{ top: headerHeight + 2 }}>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-center gap-2">
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') setSearchTerm(searchInput); }}
+              placeholder="Buscar por marca, produto ou categoria"
+              className="bg-zinc-800 text-white rounded-full px-4 py-2 w-full max-w-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
+            />
+            <button
+              onClick={() => setSearchTerm(searchInput)}
+              className="bg-amber-400 hover:bg-amber-500 text-black px-4 py-2 rounded-full font-semibold"
+              title="Pesquisar"
+            >
+              Buscar
+            </button>
+          </div>
+          {searchTerm && (
+            <div className="mt-3 text-center text-sm text-zinc-400">
+              Resultado para: <span className="text-amber-400 font-semibold">{searchTerm}</span>
+              <button
+                className="ml-3 text-amber-400 hover:text-amber-300 underline"
+                onClick={() => { setSearchTerm(''); setSearchInput(''); }}
+              >
+                Limpar busca
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+      )}
 
       {/* Information Cards Section */}
       <div className="bg-zinc-900 border-b border-amber-400/20">
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Card 1 */}
-            <div className="bg-zinc-800 rounded-lg p-6 border border-amber-400/20 hover:border-amber-400/40 transition-all">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-amber-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Syringe className="w-6 h-6 text-black" />
+            <div className="bg-zinc-800 rounded-lg p-4 border border-amber-400/20 hover:border-amber-400/40 transition-all">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-amber-400 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Syringe className="w-5 h-5 text-black" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">Envio Seguro</h3>
-                <p className="text-zinc-300 text-sm leading-relaxed">
-                  Nosso envio é totalmente discreto, com a opção de seguro onde reenviamos seu pedido em caso de apreensão/extravio.
-                </p>
+                <div className="flex-1">
+                  <h3 className="text-lg md:text-xl font-bold text-white mb-1">Envio Seguro</h3>
+                  <p className="text-zinc-300 text-xs md:text-sm leading-relaxed">
+                    Nosso envio é totalmente discreto, com a opção de seguro onde reenviamos seu pedido em caso de apreensão/extravio.
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Card 2 */}
-            <div className="bg-zinc-800 rounded-lg p-6 border border-amber-400/20 hover:border-amber-400/40 transition-all">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-amber-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ShoppingCart className="w-6 h-6 text-black" />
+            <div className="bg-zinc-800 rounded-lg p-4 border border-amber-400/20 hover:border-amber-400/40 transition-all">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-amber-400 rounded-full flex items-center justify-center flex-shrink-0">
+                  <ShoppingCart className="w-5 h-5 text-black" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">Suporte</h3>
-                <p className="text-zinc-300 text-sm leading-relaxed">
-                  Tiramos todas suas dúvidas e ajudamos a montar seu ciclo, clique no botão de atendimento no canto direito da tela.
-                </p>
+                <div className="flex-1">
+                  <h3 className="text-lg md:text-xl font-bold text-white mb-1">Suporte</h3>
+                  <p className="text-zinc-300 text-xs md:text-sm leading-relaxed">
+                    Tiramos todas suas dúvidas e ajudamos a montar seu ciclo, clique no botão de atendimento no canto direito da tela.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -436,14 +544,17 @@ export default function PricingTable() {
                 )}
                 
                 {/* Products Grid for this brand */}
-                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 md:gap-4">
                   {group.produtos.map((produto: any) => (
               <div
                 key={produto.id}
-                className="bg-zinc-900 border border-amber-400/20 rounded-3xl overflow-hidden hover:border-amber-400/50 transition-all hover:transform hover:scale-105 hover:shadow-2xl hover:shadow-amber-400/10"
+                className="bg-zinc-900 border border-amber-400/20 rounded-2xl overflow-hidden hover:border-amber-400/50 transition-all hover:shadow-2xl hover:shadow-amber-400/10 flex flex-col"
               >
                 {/* Product Image */}
-                <div className="bg-white p-4 md:p-8 flex items-center justify-center aspect-square">
+                <div
+                  className="bg-white p-2 md:p-4 flex items-center justify-center aspect-square cursor-pointer"
+                  onClick={() => abrirModalProduto(produto)}
+                >
                   {produto.imagem_url ? (
                     <img
                       src={produto.imagem_url}
@@ -458,7 +569,7 @@ export default function PricingTable() {
                 </div>
 
                 {/* Product Info */}
-                <div className="p-3 md:p-6">
+                <div className="p-2 md:p-4 flex-1 flex flex-col">
                   <div className="mb-1 md:mb-2 flex items-center justify-between">
                     <div>
                       <span className="text-amber-400 text-[10px] md:text-xs font-semibold uppercase tracking-wider">
@@ -471,28 +582,36 @@ export default function PricingTable() {
                       )}
                     </div>
                   </div>
-                  <h3 className="text-sm md:text-xl font-bold text-white mb-2 md:mb-3 line-clamp-2">{produto.nome}</h3>
-
-                  {/* Price */}
-                  <div className="mb-3 md:mb-4">
-                    <div className="text-lg md:text-2xl font-bold text-amber-400">
-                      {formatPrice(produto.preco)}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => produto.estoque > 0 && adicionarAoCarrinho(produto)}
-                    disabled={produto.estoque === 0}
-                    className={`w-full py-2 md:py-3 rounded-full text-xs md:text-base font-semibold transition-all flex items-center justify-center gap-1 md:gap-2 ${
-                      produto.estoque > 0
-                        ? 'bg-amber-400 hover:bg-amber-500 text-black hover:shadow-lg hover:shadow-amber-400/30'
-                        : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
-                    }`}
+                  <h3
+                    className="text-sm md:text-lg font-bold text-white mb-2 md:mb-2 line-clamp-2 cursor-pointer"
+                    onClick={() => abrirModalProduto(produto)}
+                    title={produto.nome}
                   >
-                    <ShoppingCart className="w-4 h-4 md:w-5 md:h-5" />
-                    <span className="hidden sm:inline">{produto.estoque > 0 ? 'Adicionar ao Carrinho' : 'Indisponível'}</span>
-                    <span className="sm:hidden">{produto.estoque > 0 ? 'Adicionar' : 'Indisponível'}</span>
-                  </button>
+                    {produto.nome}
+                  </h3>
+
+                  {/* Footer: anchor price and button to bottom */}
+                  <div className="mt-auto">
+                    <div className="mb-2">
+                      <div className="text-base md:text-xl font-bold text-amber-400">
+                        {formatPrice(produto.preco)}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => produto.estoque > 0 && adicionarAoCarrinho(produto)}
+                      disabled={produto.estoque === 0}
+                      className={`w-full py-2 md:py-3 rounded-full text-xs md:text-base font-semibold transition-all flex items-center justify-center gap-1 md:gap-2 ${
+                        produto.estoque > 0
+                          ? 'bg-amber-400 hover:bg-amber-500 text-black hover:shadow-lg hover:shadow-amber-400/30'
+                          : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
+                      }`}
+                    >
+                      <ShoppingCart className="w-4 h-4 md:w-5 md:h-5" />
+                      <span className="hidden sm:inline">{produto.estoque > 0 ? 'Adicionar ao Carrinho' : 'Indisponível'}</span>
+                      <span className="sm:hidden">{produto.estoque > 0 ? 'Adicionar' : 'Indisponível'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
