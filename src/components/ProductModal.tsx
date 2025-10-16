@@ -56,11 +56,6 @@ export default function ProductModal({ produto, onClose, onAddToCart }: ProductM
     if (e.target === overlayRef.current) onClose();
   };
 
-  const resetZoom = () => {
-    setScale(1);
-    setOffset({ x: 0, y: 0 });
-  };
-
   const diminuirQuantidade = () => setQuantidade(q => Math.max(1, q - 1));
   const aumentarQuantidade = () => setQuantidade(q => Math.min(99, q + 1));
 
