@@ -152,8 +152,18 @@ export default function PricingTable() {
     return groups;
   }, {});
 
-  // Ordenar grupos por ID da marca
+  // Ordenar grupos conforme ordem das marcas vinda do Admin
+  const brandOrderMap = new Map<string, number>(
+    marcas.map((m, i) => [String(m.id), i])
+  );
+
   const sortedBrandGroups = Object.entries(groupedByBrand).sort(([a], [b]) => {
+    const orderA = a === 'sem-marca' ? Number.POSITIVE_INFINITY : (brandOrderMap.get(a) ?? Number.POSITIVE_INFINITY);
+    const orderB = b === 'sem-marca' ? Number.POSITIVE_INFINITY : (brandOrderMap.get(b) ?? Number.POSITIVE_INFINITY);
+
+    if (orderA !== orderB) return orderA - orderB;
+
+    // Fallback por ID numérico se não houver ordem
     if (a === 'sem-marca') return 1;
     if (b === 'sem-marca') return -1;
     return parseInt(a) - parseInt(b);
@@ -641,7 +651,7 @@ export default function PricingTable() {
           />
           
           {/* Carrinho Panel */}
-          <div className="absolute right-0 top-0 h-full w-full md:max-w-md max-w-[50%] bg-zinc-900 shadow-2xl transform transition-transform duration-300 ease-in-out">
+          <div className="absolute right-0 top-0 h-full w-3/4 md:w-full md:max-w-md bg-zinc-900 shadow-2xl transform transition-transform duration-300 ease-in-out">
             {/* Header do Carrinho */}
             <div className="flex items-center justify-between p-6 border-b border-amber-400/20">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -685,10 +695,10 @@ export default function PricingTable() {
 
                         {/* Informações do produto */}
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-white text-sm line-clamp-2 mb-1">
+                          <h3 className="font-semibold text-white text-base md:text-sm leading-snug line-clamp-3 md:line-clamp-2 mb-1 break-words">
                             {item.produto.nome}
                           </h3>
-                          <p className="text-amber-400 font-bold text-sm">
+                          <p className="text-amber-400 font-bold text-[1.275rem] md:text-sm leading-tight">
                             {formatPrice(item.produto.preco)}
                           </p>
                           
