@@ -593,7 +593,7 @@ export default function PricingTable() {
                     </div>
                   </div>
                   <h3
-                    className="text-sm md:text-lg font-bold text-white mb-2 md:mb-2 line-clamp-2 cursor-pointer"
+                    className="text-sm md:text-lg font-bold text-white mb-2 md:mb-2 line-clamp-3 cursor-pointer"
                     onClick={() => abrirModalProduto(produto)}
                     title={produto.nome}
                   >
