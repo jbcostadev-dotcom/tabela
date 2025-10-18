@@ -651,7 +651,7 @@ export default function PricingTable() {
           />
           
           {/* Carrinho Panel */}
-          <div className="absolute right-0 top-0 h-full w-3/4 md:w-full md:max-w-md bg-zinc-900 shadow-2xl transform transition-transform duration-300 ease-in-out">
+          <div className="absolute right-0 top-0 h-full w-3/4 md:w-full md:max-w-md bg-zinc-900 shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col">
             {/* Header do Carrinho */}
             <div className="flex items-center justify-between p-6 border-b border-amber-400/20">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -666,8 +666,8 @@ export default function PricingTable() {
               </button>
             </div>
 
-            {/* Conteúdo do Carrinho */}
-            <div className="flex-1 overflow-y-auto p-6">
+            {/* Conteúdo do Carrinho - Com altura máxima e rolagem */}
+            <div className="flex-1 overflow-y-auto p-6 max-h-[calc(100vh-200px)]">
               {carrinho.length === 0 ? (
                 <div className="text-center py-12">
                   <ShoppingCart size={48} className="mx-auto text-zinc-600 mb-4" />
@@ -736,9 +736,9 @@ export default function PricingTable() {
               )}
             </div>
 
-            {/* Footer do Carrinho */}
+            {/* Footer do Carrinho - Fixo na parte inferior */}
             {carrinho.length > 0 && (
-              <div className="border-t border-amber-400/20 p-6 bg-zinc-800">
+              <div className="border-t border-amber-400/20 p-6 bg-zinc-800 sticky bottom-0 left-0 right-0">
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-lg font-semibold">Total:</span>
                   <span className="text-xl font-bold text-amber-400">
